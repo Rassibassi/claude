@@ -10,7 +10,9 @@ In particular, this repository provides an implementation for our paper "Deep Le
 
 ### Acknowledgements
 The learning algorithm learns by embedding a fiber channel model within an autoencoder. The implementation of the fiber channel model is copied from a MATLAB implementation by Dar et al. [https://www.osapublishing.org/oe/abstract.cfm?uri=oe-22-12-14199, https://arxiv.org/abs/1310.6137]. Please cite the authors appropriately if you use the here provided Python implementation.
+
 [Numpy model](claude/claude/models/NLIN.py) [claude/claude/models/NLIN.py]
+
 [Tensorflow model](claude/claude/claudeflow/models/NLIN.py) [claude/claude/claudeflow/models/NLIN.py]
 
 ### Installation using Anaconda on Ubuntu
