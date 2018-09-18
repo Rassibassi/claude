@@ -16,7 +16,7 @@ The learning algorithm learns by embedding a fiber channel model within an autoe
 [Tensorflow model](claude/claude/claudeflow/models/NLIN.py) [claude/claude/claudeflow/models/NLIN.py]
 
 ### Installation using Anaconda on Ubuntu
-Install Anaconda from https://www.tensorflow.org/install/install_linux#InstallingAnaconda
+Install Anaconda from https://www.anaconda.com/download/
 
 Clone the git repository into your filesystem
 ```
@@ -34,7 +34,7 @@ Activate the new environment
 ```
 source activate claudeDev
 ```
-Install TensorFlow as instructed here: https://www.tensorflow.org/install/
+Install TensorFlow as instructed here: https://www.tensorflow.org/install/install_linux#InstallingAnaconda
 
 Install the local `claude` pip package
 ```
