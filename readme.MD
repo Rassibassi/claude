@@ -1,10 +1,11 @@
 # Claude
-This repository provides helper functions and model for end-to-end learning of optical communication system.
+This repository provides helper functions and models for end-to-end learning of optical communication system.
 
 In particular, this repository provides an implementation for our paper "Deep Learning of Geometric Constellation Shaping including Fiber Nonlinearities" [https://arxiv.org/abs/1805.03785].
 
 ### Content
 [Example of fiber model](examples/np_NLINmodel.ipynb)
+
 [Example of end-to-end learning of geometric constellation shapes](examples/tf_AutoEncoderForGeometricShapingAndNlinModel.ipynb)
 
 ### Acknowledgements
@@ -32,11 +33,13 @@ Activate the new environment
 source activate claudeDev
 ```
 Install TensorFlow as instructed here: https://www.tensorflow.org/install/
+
 Install the local `claude` pip package
 ```
 pip install -e claude
 ```
 This will install `claude` from the claude folder.
+
 Check if everything is installed
 ```
 pip list | grep -E 'claude|tensorflow|numpy|scipy|jupyter|matplotlib'
