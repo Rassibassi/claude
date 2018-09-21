@@ -1,5 +1,5 @@
 # Claude
-This repository provides helper functions and models for end-to-end learning of optical communication system.
+This repository provides helper functions and models for end-to-end learning of optical communication systems.
 
 In particular, this repository provides an implementation for our paper "Deep Learning of Geometric Constellation Shaping including Fiber Nonlinearities" [https://arxiv.org/abs/1805.03785].
 
@@ -59,6 +59,13 @@ scipy              1.1.0
 tensorflow         1.10.1
 ```
 
+Start Jupyter with
+```
+jupyter notebook
+```
+
+Open the Jupyter notebooks in the example directory.
+Then you can click on Kernel -> Restart & Run All
 
 
 
