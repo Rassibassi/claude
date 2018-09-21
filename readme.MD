@@ -6,7 +6,11 @@ In particular, this repository provides an implementation for our paper "Deep Le
 ### Content
 [Example of fiber model](examples/np_NLINmodel.ipynb)
 
-[Example of end-to-end learning of geometric constellation shapes](examples/tf_AutoEncoderForGeometricShapingAndNlinModel.ipynb)
+[Example of end-to-end learning of geometric constellation shapes with an AWGN channel](examples/tf_AutoEncoderForGeometricShapingAndAwgn.ipynb)
+
+[Example of end-to-end learning of geometric constellation shapes with a fiber channel model](examples/tf_AutoEncoderForGeometricShapingAndNlinModel.ipynb)
+
+[Example of learning of geometric constellation shapes with no channel info over an AWGN channel](examples/tf_AutoEncoderForGeometricShapingAndBlindAwgn.ipynb) [https://arxiv.org/abs/1804.02276]
 
 ### Acknowledgements
 The learning algorithm learns by embedding a fiber channel model within an autoencoder. The implementation of the fiber channel model is copied from a MATLAB implementation by Dar et al. [https://www.osapublishing.org/oe/abstract.cfm?uri=oe-22-12-14199, https://arxiv.org/abs/1310.6137]. Please cite the authors appropriately if you use the here provided Python implementation.
