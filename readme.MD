@@ -1,7 +1,7 @@
 # Claude
 This repository provides helper functions and models for end-to-end learning of optical communication systems.
 
-In particular, this repository provides an implementation for our paper "Deep Learning of Geometric Constellation Shaping including Fiber Nonlinearities" [https://arxiv.org/abs/1805.03785].
+In particular, this repository provides an implementation for our paper "Deep Learning of Geometric Constellation Shaping including Fiber Nonlinearities" [https://arxiv.org/abs/1805.03785] and our manuscript "Geometric Constellation Shaping for Fiber Optic Communication Systems via End-to-end Learning" [https://arxiv.org/abs/1810.00774].
 
 ### Content
 [Example of fiber model](examples/np_NLINmodel.ipynb)
