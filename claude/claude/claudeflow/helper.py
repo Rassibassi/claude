@@ -22,8 +22,59 @@ def logBase(x,base):
 def log10(x):
     return logBase(x,10)
 
-def MI(softmax, X, Px):
+def log2(x):
+    return logBase(x,2)
+
+def softmax_MI(softmax, X, Px):
     MI = tf.reduce_mean( logBase( tf.reduce_sum( softmax*X, axis=-1) / Px, 2) )
+    return MI
+
+def gaussian_MI(x, y, constellation, M, dtype=tf.float64):
+    """
+    Computes mutual information with Gaussian auxiliary channel assumption and constellation with uniform porbability distribution
+    x: (1, N), N normalized samples at the transmitter
+    y: (1, N), N normalized observations at the receiver
+    constellation: (1, M), normalized constellation of order M
+    
+    Transcribed from Dr. Tobias Fehenberger MATLAB code.
+    See: https://www.fehenberger.de/#sourcecode
+    """
+    if len(constellation.shape) == 1:
+        constellation = tf.expand_dims(constellation, axis=0)
+    if len(y.shape) == 1:
+        y = tf.expand_dims(y, axis=0)
+    if len(x.shape) == 1:
+        x = tf.expand_dims(x, axis=0)
+    if y.shape[0] != 1:
+        y = tf.linalg.transpose(y)
+    if x.shape[0] != 1:
+        x = tf.linalg.transpose(x)
+    if constellation.shape[0] == 1:
+        constellation = tf.linalg.transpose(constellation)
+
+    N = tf.cast( tf.shape(x)[1], dtype )
+
+    PI = tf.constant( np.pi, dtype=dtype )
+    REALMIN = tf.constant( np.finfo(float).tiny, dtype=dtype )
+    
+    # TODO
+    # use following line if P_X is not uniform or empirical
+    # xint = tf.math.argmin( tf.square( tf.abs( x - constellation ) ), axis=0)
+    # ...
+    # else:
+    P_X = tf.constant( 1 / M, dtype=dtype)
+    N0 = tf.reduce_mean( tf.square( tf.abs(x-y) ) )
+    
+    qYonX = 1 / ( PI*N0 ) * tf.exp( ( -tf.square(tf.real(y)-tf.real(x)) -tf.square(tf.imag(y)-tf.imag(x)) ) / N0 )
+    
+    qY = []
+    for ii in np.arange(M):
+        temp = P_X * (1 / (PI * N0) * tf.exp( ( -tf.square(tf.real(y)-tf.real(constellation[ii,0])) -tf.square(tf.imag(y)-tf.imag(constellation[ii,0])) ) / N0) )
+        qY.append(temp)
+    qY = tf.reduce_sum( tf.concat(qY, axis=0), axis=0)
+            
+    MI = 1 / N * tf.reduce_sum( log2( tf.math.maximum(qYonX, REALMIN) / tf.math.maximum(qY, REALMIN) ) )
+    
     return MI
 
 def lin2dB(lin,dBtype):
