@@ -65,8 +65,9 @@ def SNRtoMI(N,effSNR,constellation):
     return calcMI_MC(x,y,constellation)
 
 def calcMI_MC(x,y,constellation):
-    """Transcribed from Dr. Tobias Fehenberger MATLAB code.
-       See: https://www.fehenberger.de/#sourcecode
+    """
+        Transcribed from Dr. Tobias Fehenberger MATLAB code.
+        See: https://www.fehenberger.de/#sourcecode
     """
     if y.shape[0] != 1:
         y = y.T
@@ -105,3 +106,20 @@ def calcMI_MC(x,y,constellation):
     MI=1/N*np.sum(np.log2(np.maximum(qYonX,realmin)/np.maximum(qY,realmin)))
 
     return MI
+
+def generateBitVectors(N, M):
+    # Generates N bit vectors with M bits
+    w = int(np.log2(M))
+    d = np.zeros((N,w))
+    r = np.random.randint(low=0, high=M, size=(N,) )
+    for ii in range(N):
+        d[ii,:] = np.array( [ float(x) for x in np.binary_repr(r[ii],width=w) ] )
+    return d
+
+def generateUniqueBitVectors(M):
+    # Generates log2(M) unique bit vectors with M bits
+    w = int(np.log2(M))
+    d = np.zeros((M,w))
+    for ii in range(M):
+        d[ii,:] = np.array( [ float(x) for x in np.binary_repr(ii,width=w) ] )
+    return d
