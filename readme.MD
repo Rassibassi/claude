@@ -4,13 +4,16 @@ This repository provides helper functions and models for end-to-end learning of 
 In particular, this repository provides an implementation for our paper "Deep Learning of Geometric Constellation Shaping including Fiber Nonlinearities" [https://arxiv.org/abs/1805.03785] and our manuscript "Geometric Constellation Shaping for Fiber Optic Communication Systems via End-to-end Learning" [https://arxiv.org/abs/1810.00774].
 
 ### Content
-[Example of fiber model](examples/np_NLINmodel.ipynb)
+- Fiber model [iPyton Notebook Example](examples/np_NLINmodel.ipynb)
+- End-to-end learning:
 
-[Example of end-to-end learning of geometric constellation shapes with an AWGN channel](examples/tf_AutoEncoderForGeometricShapingAndAwgn.ipynb)
-
-[Example of end-to-end learning of geometric constellation shapes with a fiber channel model](examples/tf_AutoEncoderForGeometricShapingAndNlinModel.ipynb)
-
-[Example of learning of geometric constellation shapes with no channel info over an AWGN channel](examples/tf_AutoEncoderForGeometricShapingAndBlindAwgn.ipynb) [https://arxiv.org/abs/1804.02276]
+|iPyton Notebook Example | Channel | Optimised for bits/symbols (GMI/MI) | Gradient Through Channel | Reference |
+|---|---|---|---|---|
+[Link](examples/tf_AutoEncoderForGeometricShapingAndAwgn.ipynb) | AWGN | Symbols (MI) | :heavy_check_mark: | ---
+[Link](examples/tf_AutoEncoderForGeometricShapingAndNlinModel.ipynb) | Fiber (NLIN/GN)	| Symbols (MI) | :heavy_check_mark: | [Arxiv 1](https://arxiv.org/abs/1805.03785), [Arxiv 2](https://arxiv.org/abs/1810.00774)
+[Link](examples/tf_AutoEncoderForGeometricShapingAwgnGmi.ipynb) | AWGN | Bits (GMI) | :heavy_check_mark: | ---
+[Link](examples/tf_AutoEncoderForGeometricShapingNlinGmi.ipynb) | Fiber (NLIN/GN)	| Bits (GMI) | :heavy_check_mark: | ---
+[Link](examples/tf_AutoEncoderForGeometricShapingAndBlindAwgn.ipynb) | AWGN | Symbols (MI) | :x: | [Arxiv](https://arxiv.org/abs/1804.02276)
 
 ### Acknowledgements
 The learning algorithm learns by embedding a fiber channel model within an autoencoder. The implementation of the fiber channel model is copied from a MATLAB implementation by Dar et al. [https://www.osapublishing.org/oe/abstract.cfm?uri=oe-22-12-14199, https://arxiv.org/abs/1310.6137]. Please cite the authors appropriately if you use the here provided Python implementation.
