@@ -5,14 +5,14 @@ In particular, this repository provides an implementation for our paper "Deep Le
 
 ### Content
 - Fiber model [iPyton Notebook Example](examples/np_NLINmodel.ipynb)
-- End-to-end learning:
+- Geometrical constellation shaping via end-to-end learning:
 
 |iPyton Notebook Example | Channel | Optimised for bits/symbols (GMI/MI) | Gradient Through Channel | Reference |
 |---|---|---|---|---|
 [Link](examples/tf_AutoEncoderForGeometricShapingAndAwgn.ipynb) | AWGN | Symbols (MI) | :heavy_check_mark: | ---
 [Link](examples/tf_AutoEncoderForGeometricShapingAndNlinModel.ipynb) | Fiber (NLIN/GN)	| Symbols (MI) | :heavy_check_mark: | [Arxiv 1](https://arxiv.org/abs/1805.03785), [Arxiv 2](https://arxiv.org/abs/1810.00774)
 [Link](examples/tf_AutoEncoderForGeometricShapingAwgnGmi.ipynb) | AWGN | Bits (GMI) | :heavy_check_mark: | ---
-[Link](examples/tf_AutoEncoderForGeometricShapingNlinGmi.ipynb) | Fiber (NLIN/GN)	| Bits (GMI) | :heavy_check_mark: | ---
+[Link](examples/tf_AutoEncoderForGeometricShapingNlinGmi.ipynb) | Fiber (NLIN/GN)	| Bits (GMI) | :heavy_check_mark: | [Arxiv](https://arxiv.org/abs/1907.08535)
 [Link](examples/tf_AutoEncoderForGeometricShapingAndBlindAwgn.ipynb) | AWGN | Symbols (MI) | :x: | [Arxiv](https://arxiv.org/abs/1804.02276)
 
 ### Acknowledgements
