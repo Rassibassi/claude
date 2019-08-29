@@ -16,6 +16,20 @@ class AttrDict(dict):
 
         return s
 
+def unitlessAxis(samplesPerSymbol,filterSpan):
+    axis = np.linspace(-(filterSpan/2), (filterSpan/2), samplesPerSymbol*filterSpan+1)
+    return axis[:-1]
+
+def freqAxis(N,Fs):
+    if N/2%1==0:
+        f = np.concatenate( [np.arange(0,N/2), np.arange(-N/2,0)] )/(N/Fs)
+    else:
+        f = np.concatenate( [np.arange(0,N/2), np.arange(-N/2+.5,0)] )/(N/Fs)
+    return f
+    
+def omegaAxis(N,Fs):
+    return 2*np.pi*freqAxis(N,Fs)
+    
 def hotOnes(size,tanspose,M,seed=None):
     if seed!=None:
         np.random.seed(seed)

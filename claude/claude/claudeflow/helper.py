@@ -2,9 +2,72 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 
-def QAMencoder(x,c):
-    comp = tf.transpose(tf.matmul(c,tf.cast(tf.transpose(x,(1,0)),c.dtype)),(1,0))
-    return tf.concat([tf.real(comp),tf.imag(comp)],axis=1)
+import claude.tx as tx
+import claude.utils as cu
+
+def i_fft(h, signal, transform_filter=True):
+    if transform_filter:
+        return tf.signal.ifft( tf.signal.fft(h) * tf.signal.fft(signal) )
+    else:
+        return tf.signal.ifft( h * tf.signal.fft(signal) )
+
+def QAMencoder(X, constellation, realOutput=True):    
+    Xcpx = tf.cast(X, constellation.dtype)
+    comp = tf.squeeze(constellation @ tf.linalg.matrix_transpose(Xcpx), -2)
+
+    if realOutput:
+        return tf.stack([tf.math.real(comp),tf.math.imag(comp)],axis=-1)
+    else:
+        return comp
+
+def upsample(symbols, sps, N):
+    """
+        symbols: (?, ?, ..., N), Tensor where most inner dimension is being upsampled
+        sps: Samples per symbol, or upsampling factor
+        N: Number of symbols/samples
+    """
+
+    zeroShape = tf.concat((tf.shape(symbols),        tf.constant([sps-1], tf.int32)), axis=0)
+    newShape  = tf.concat((tf.shape(symbols)[0:-1], tf.constant([N*sps], tf.int32)), axis=0)
+
+    symbols_stacked = tf.concat([tf.expand_dims(symbols, -1), tf.zeros(zeroShape, dtype=symbols.dtype)], axis=-1)
+
+    return tf.reshape(symbols_stacked, newShape)
+
+def downsample(signal, sps, N):
+    """
+        symbols: (?, ?, ..., N*sps), Tensor where most inner dimension is upsampled
+        sps: Samples per symbol, or upsampling factor
+        N: Number of symbols/samples
+    """
+
+    outerShape = tf.shape(signal)[0:-1]
+    innerShape = tf.constant([N, sps], tf.int32)
+    shape = tf.concat((outerShape, innerShape), axis=0)
+
+    return tf.reshape(tf.expand_dims(signal, -1), shape)[..., 0]
+
+def pulseshaper(symbols_up, rollOff, sps, span, N):
+    p = tx.fftShiftZeroPad(tx.rrcos(rollOff, sps, span), N*sps)
+    h = tf.expand_dims(tf.constant(p, dtype=symbols_up.dtype), axis=0)
+    return i_fft(h, symbols_up)
+
+def dispersion_compensation(signal, beta2, distance, N, Fs):
+    if signal.dtype == tf.complex64:
+        realType = tf.float32
+    else:
+        realType = tf.float64
+    
+    omega       = tf.constant( cu.omegaAxis(N, Fs), realType )
+    two         = tf.constant( 2, realType )
+
+    zeroOneCpx  = tf.constant( 0+1j, signal.dtype )
+    distanceCpx = tf.cast( distance, signal.dtype )    
+    
+    dispersion_compensation = tf.exp( zeroOneCpx * distanceCpx * tf.cast( beta2/two * tf.square(omega), signal.dtype ) )
+    dispersion_compensation = tf.expand_dims( dispersion_compensation, 0 )
+    signal = i_fft( dispersion_compensation, signal, transform_filter=False )
+    return signal
 
 def IQ_abs(x):
     return tf.sqrt(tf.square(x[:,0])+tf.square(x[:,1]))
@@ -15,8 +78,8 @@ def IQ_norm(x,epsilon=1e-12):
     return x*rsqrt
 
 def logBase(x,base):
-    numerator = tf.log(x)
-    denominator = tf.log(tf.constant(base, dtype=numerator.dtype))
+    numerator = tf.math.log(x)
+    denominator = tf.math.log(tf.constant(base, dtype=numerator.dtype))
     return numerator / denominator
 
 def log10(x):
@@ -47,11 +110,11 @@ def gaussianMI(x, y, constellation, M, dtype=tf.float64):
     if len(x.shape) == 1:
         x = tf.expand_dims(x, axis=0)
     if y.shape[0] != 1:
-        y = tf.linalg.transpose(y)
+        y = tf.linalg.matrix_transpose(y)
     if x.shape[0] != 1:
-        x = tf.linalg.transpose(x)
+        x = tf.linalg.matrix_transpose(x)
     if constellation.shape[0] == 1:
-        constellation = tf.linalg.transpose(constellation)
+        constellation = tf.linalg.matrix_transpose(constellation)
 
     N = tf.cast( tf.shape(x)[1], dtype )
 
@@ -66,11 +129,11 @@ def gaussianMI(x, y, constellation, M, dtype=tf.float64):
     P_X = tf.constant( 1 / M, dtype=dtype)
     N0 = tf.reduce_mean( tf.square( tf.abs(x-y) ) )
     
-    qYonX = 1 / ( PI*N0 ) * tf.exp( ( -tf.square(tf.real(y)-tf.real(x)) -tf.square(tf.imag(y)-tf.imag(x)) ) / N0 )
+    qYonX = 1 / ( PI*N0 ) * tf.exp( ( -tf.square(tf.math.real(y)-tf.math.real(x)) -tf.square(tf.math.imag(y)-tf.math.imag(x)) ) / N0 )
     
     qY = []
     for ii in np.arange(M):
-        temp = P_X * (1 / (PI * N0) * tf.exp( ( -tf.square(tf.real(y)-tf.real(constellation[ii,0])) -tf.square(tf.imag(y)-tf.imag(constellation[ii,0])) ) / N0) )
+        temp = P_X * (1 / (PI * N0) * tf.exp( ( -tf.square(tf.math.real(y)-tf.math.real(constellation[ii,0])) -tf.square(tf.math.imag(y)-tf.math.imag(constellation[ii,0])) ) / N0) )
         qY.append(temp)
     qY = tf.reduce_sum( tf.concat(qY, axis=0), axis=0)
             
@@ -105,7 +168,7 @@ def gaussianLLR( constellation, constellation_bits, Y, SNR_lin, M ):
     sum_zeros = tf.reduce_sum( tf.reshape( expAbs( tf.expand_dims(constellation_zero_flat, axis=1), Y, SNR_lin ), [int(M/2),m,-1] ), axis=0 )
     sum_ones = tf.reduce_sum( tf.reshape( expAbs( tf.expand_dims(constellation_one_flat, axis=1), Y, SNR_lin ), [int(M/2),m,-1] ), axis=0 )
 
-    LLRs = tf.log( sum_zeros / sum_ones )
+    LLRs = tf.math.log( sum_zeros / sum_ones )
 
     return LLRs
 
@@ -162,8 +225,8 @@ def create_reset_metric(metric, scope='reset_metrics', *metric_args, **metric_kw
     """
         see https://github.com/tensorflow/tensorflow/issues/4814#issuecomment-314801758
     """
-    with tf.variable_scope(scope) as scope:
+    with tf.compat.v1.variable_scope(scope) as scope:
         metric_op, update_op = metric(*metric_args, **metric_kwargs)
-        vars = tf.contrib.framework.get_variables(scope, collection=tf.GraphKeys.LOCAL_VARIABLES)
-        reset_op = tf.variables_initializer(vars)
+        vars = tf.contrib.framework.get_variables(scope, collection=tf.compat.v1.GraphKeys.LOCAL_VARIABLES)
+        reset_op = tf.compat.v1.variables_initializer(vars)
     return metric_op, update_op, reset_op
