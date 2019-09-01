@@ -69,6 +69,67 @@ def dispersion_compensation(signal, beta2, distance, N, Fs):
     signal = i_fft( dispersion_compensation, signal, transform_filter=False )
     return signal
 
+def staticPhaseRotationCompensation(symbols):
+    if symbols.dtype == tf.complex64:
+        realType = tf.float32
+    else:
+        realType = tf.float64    
+    
+    HALF         = tf.constant( 0.5, realType)
+    FOUR         = tf.constant( 4, realType)
+    PI           = tf.constant( np.pi, realType)
+    zeroOneCpx   = tf.constant( 0+1j, symbols.dtype)
+    
+    symbols2 = tf.square( symbols )
+    symbols2vec = tf.stack([tf.math.real(symbols2), tf.math.imag(symbols2)], axis=-2)
+    covarianceMatrix = tf.matmul(symbols2vec, tf.linalg.matrix_transpose(symbols2vec))
+    eig = tf.linalg.eigh(covarianceMatrix)
+    eigenVec = eig[-1][..., -1] # pick largest eigenvalue
+    phi = HALF * tf.math.atan(eigenVec[..., 1] / eigenVec[..., 0]) - PI/FOUR
+    
+    phiCpx = tf.expand_dims( tf.cast(phi, symbols.dtype), -1 )
+    
+    symbols = symbols * tf.exp( -zeroOneCpx * phiCpx )
+    
+    return symbols
+
+def tfarg(fn, x):
+    """
+        tf.argmin and tf.argmax only handle Tensor of 6 dimensions. This fixes it.
+        
+        tfarg finds 'fn' (tf.argmin or tf.argmax) of the inner-most dimension of 'x'.
+    """
+    return tf.reshape( fn( tf.reshape(x, [-1, tf.shape(x)[-1]] ), -1), tf.shape(x)[0:-1] )
+
+def testPhases(txSymbols, rxSymbols, constellation, nDims, M, nTestPhases=4):
+    PI = tf.constant(np.pi, rxSymbols.dtype)
+    zeroTwoCpx = tf.constant( 0+2j, rxSymbols.dtype)
+    
+    tile_multiples = [1] * (nDims+1)
+    tile_multiples[-1] = nTestPhases
+    phi4rot = tf.cast( tf.range(0, 1, 1/nTestPhases), rxSymbols.dtype)
+    
+    rxSymbols4rot = tf.tile( tf.expand_dims(rxSymbols, -1), tile_multiples ) * tf.exp( -zeroTwoCpx * PI * phi4rot )
+    
+    tile_multiples = [1] * (nDims+2)
+    tile_multiples[-1] = M
+    rxSymbols4rot_tiled = tf.tile( tf.expand_dims( rxSymbols4rot, -1 ), tile_multiples )
+    
+    tile_multiples = [1] * (nDims+1)
+    tile_multiples[-1] = M
+    txSymbols_tiled = tf.tile( tf.expand_dims( txSymbols, -1 ), tile_multiples )
+    txIdx = tf.argmin( tf.abs( txSymbols_tiled - constellation ), axis=-1 )    
+    
+    rxIdx4rot = tfarg(tf.argmin, tf.abs( rxSymbols4rot_tiled - constellation ))
+    errors4rot = tf.reduce_sum( tf.cast( tf.not_equal( tf.expand_dims(txIdx, -1), rxIdx4rot ), tf.int32 ), -2)
+    
+    rot = tf.argmin( errors4rot, -1 )
+    rotByThis = tf.expand_dims( tf.gather(phi4rot,rot), -1 )
+
+    rxSymbols = rxSymbols * tf.exp( -zeroTwoCpx * PI * rotByThis )
+    
+    return rxSymbols  
+
 def IQ_abs(x):
     return tf.sqrt(tf.square(x[:,0])+tf.square(x[:,1]))
 
