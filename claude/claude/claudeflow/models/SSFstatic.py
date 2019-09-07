@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import numpy.matlib as matlib
 
 import claude.claudeflow.helper as cfh
 import claude.utils as cu
@@ -16,16 +17,16 @@ def logStepSizes(spanLength, alpha, nSteps):
 	h = -1/(2*alphalin) * np.log( (1-n*sigma) / (1-(n-1)*sigma) )
 	return h
 
-def randomizeSteps(stepSizes, spanLength, nSpans):
-	stepSizes = np.matlib.repmat(stepSizes, nSpans, 1)
-	stepSizes = stepSizes + np.random.normal(0,0.1*stepSizes[0,0],size=stepSizes.shape)
+def randomizeSteps(stepSizes, spanLength, nSpans, sigma=0.01):
+	stepSizes = matlib.repmat(stepSizes, nSpans, 1)
+	stepSizes = stepSizes + np.random.normal(0, sigma*stepSizes[0,0], size=stepSizes.shape)
 	stepSizes[:,-1] = stepSizes[:,-1] - (np.sum( stepSizes, axis=1 ) - spanLength)
 	return stepSizes
 
 def defaultParameters(D=16.4640, Fc=1.9341e+14, precision='double'):
 
 	lambda_ = c/Fc
-	beta2 = D*1e-6*lambda_**2/(2*np.pi*c)*1e27
+	beta2 = D*1e-6*lambda_**2/(2*np.pi*c)
 
 	param = cu.AttrDict()
 	param.Fs = 5.1200e+11
@@ -33,7 +34,7 @@ def defaultParameters(D=16.4640, Fc=1.9341e+14, precision='double'):
 	param.nSteps = 1
 	param.stepSize = 100
 	param.ampScheme = 'EDFA'
-	param.noiseEnabled = False
+	param.noiseEnabled = True
 	param.manakovEnabled = True
 	param.dispersionCompensationEnabled = False # inline dispersion compensation
 	param.checkpointInverval = 2

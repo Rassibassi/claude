@@ -14,7 +14,7 @@ h = 6.6261e-34
 
 def defaultParameters(D=16.4640, Fc=1.9341e+14):
     lambda_ = c/Fc
-    beta2 = D*1e-6*lambda_**2/(2*np.pi*c)*1e27
+    beta2 = D*1e-6*lambda_**2/(2*np.pi*c)
 
     param = cu.AttrDict()
 
@@ -54,7 +54,7 @@ def normalizeParameters(param):
     param.alphaNorm = param.alpha/10*np.log(10)
     param.T  = 1000/param.Rs
     param.P0 = cu.dB2lin( param.PdBm, 'dBm' )
-    param.beta2Norm = param.beta2/param.T**2
+    param.beta2Norm = (param.beta2*1e27)/param.T**2
     param.PDNorm = param.PD/param.T**2
     param.chSpacingNorm = param.chSpacing/param.Rs
     
@@ -271,3 +271,44 @@ def calcIntraChannelGN(X,param):
         NLIN_intra = 16/81*(NLIN_intra+X[1,:])
     NLIN_intra = param.P0**3*NLIN_intra
     return NLIN_intra
+
+def calcConstants(param):
+    aseNoisePower = calcAseNoisePower(param)
+    
+    # Calculate System constants
+    chi = np.zeros( (2, param.nChannels) )
+    intraConstAdd = np.zeros( (5, param.nChannels) )
+    interConstAdd = np.zeros( (4, param.nChannels) )
+    for ii,channel in enumerate(param.channels):
+        param.chSpacing = channel
+        chi[:,ii] = calcInterConstants(param)
+        intraConstAdd[:,ii] = calcIntraConstantsAddTerms(param)
+        interConstAdd[:,ii] = calcInterConstantsAddTerms(param)
+
+    X = calcIntraConstants(param)
+    
+    return (aseNoisePower, chi, X, intraConstAdd, interConstAdd)
+
+def calcNLIN(param, powerSweep, aseNoisePower, chi, X, intraConstAdd, interConstAdd):
+    inter = np.zeros(powerSweep.shape)
+    intra = np.zeros(powerSweep.shape)
+
+    interAdd = np.zeros(powerSweep.shape)
+    intraAdd = np.zeros(powerSweep.shape)
+
+    for ii,PdBm in enumerate(powerSweep):
+        param.PdBm = PdBm
+        inter[ii] = np.sum( calcInterChannelNLIN(chi,param) )
+        intra[ii] = calcIntraChannelNLIN(X,param)[0]
+
+        interAdd[ii] = np.sum( calcInterChannelNLINAddTerms(interConstAdd, param) )
+        intraAdd[ii] = np.sum( calcIntraChannelNLIN(intraConstAdd, param) )
+    
+    return cu.lin2dB( aseNoisePower+inter+intra+interAdd+intraAdd, 'dBm')
+
+def calcKur(constellation):
+    power = np.mean(np.abs(constellation)**2)
+    kur  = np.mean(np.abs(constellation)**4) / power**2
+    kur3 = np.mean(np.abs(constellation)**6) / power**3
+    
+    return (kur, kur3)

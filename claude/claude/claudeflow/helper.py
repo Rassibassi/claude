@@ -52,6 +52,10 @@ def pulseshaper(symbols_up, rollOff, sps, span, N):
     h = tf.expand_dims(tf.constant(p, dtype=symbols_up.dtype), axis=0)
     return i_fft(h, symbols_up)
 
+def truncate(nSamples, *signals):
+    signals = [signal[..., nSamples:-nSamples] for signal in signals]
+    return signals
+    
 def dispersion_compensation(signal, beta2, distance, N, Fs):
     if signal.dtype == tf.complex64:
         realType = tf.float32
@@ -95,13 +99,13 @@ def staticPhaseRotationCompensation(symbols):
 
 def tfarg(fn, x):
     """
-        tf.argmin and tf.argmax only handle Tensor of 6 dimensions. This fixes it.
+        tf.argmin and tf.argmax only handle Tensors of < 6 dimensions. This fixes it.
         
-        tfarg finds 'fn' (tf.argmin or tf.argmax) of the inner-most dimension of 'x'.
+        tfarg finds 'fn' (tf.argmin or tf.argmax) of the inner-most dimension of 'x', hence equivalent to tf.argmin(x, -1) or tf.argmax(x. -1).
     """
-    return tf.reshape( fn( tf.reshape(x, [-1, tf.shape(x)[-1]] ), -1), tf.shape(x)[0:-1] )
+    return tf.reshape( fn( tf.reshape( x, [-1, tf.shape(x)[-1]] ), -1 ), tf.shape(x)[0:-1] )
 
-def testPhases(txSymbols, rxSymbols, constellation, nDims, M, nTestPhases=4):
+def testPhases(constellation, txSymbols, rxSymbols, nDims, M, nTestPhases=4):
     PI = tf.constant(np.pi, rxSymbols.dtype)
     zeroTwoCpx = tf.constant( 0+2j, rxSymbols.dtype)
     
@@ -118,25 +122,64 @@ def testPhases(txSymbols, rxSymbols, constellation, nDims, M, nTestPhases=4):
     tile_multiples = [1] * (nDims+1)
     tile_multiples[-1] = M
     txSymbols_tiled = tf.tile( tf.expand_dims( txSymbols, -1 ), tile_multiples )
-    txIdx = tf.argmin( tf.abs( txSymbols_tiled - constellation ), axis=-1 )    
+    txIdx = tf.argmin( tf.abs( txSymbols_tiled - constellation ), -1 )    
     
     rxIdx4rot = tfarg(tf.argmin, tf.abs( rxSymbols4rot_tiled - constellation ))
     errors4rot = tf.reduce_sum( tf.cast( tf.not_equal( tf.expand_dims(txIdx, -1), rxIdx4rot ), tf.int32 ), -2)
     
-    rot = tf.argmin( errors4rot, -1 )
-    rotByThis = tf.expand_dims( tf.gather(phi4rot,rot), -1 )
+    rotIdx = tf.argmin( errors4rot, -1 )
+    rotByThis = tf.expand_dims( tf.gather(phi4rot, rotIdx), -1 )
 
     rxSymbols = rxSymbols * tf.exp( -zeroTwoCpx * PI * rotByThis )
     
-    return rxSymbols  
+    return rxSymbols
 
-def IQ_abs(x):
-    return tf.sqrt(tf.square(x[:,0])+tf.square(x[:,1]))
+def real2complex(x):
+    return tf.complex(x[...,0], x[...,1])
 
-def IQ_norm(x,epsilon=1e-12):
-    rmean = tf.reduce_mean( tf.square( IQ_abs(x) ) )
-    rsqrt = tf.rsqrt(tf.maximum(rmean, epsilon))    
-    return x*rsqrt
+def complex2real(x, axis=-1):
+    return tf.stack((tf.math.real(x), tf.math.imag(x)), axis=axis)
+
+from tensorflow.python.framework import function
+
+def norm_grad(x, dy):
+    return tf.expand_dims(dy, axis=-1)*(x/(tf.norm(x, keepdims=True, axis=-1)+1.0e-19))
+    
+@function.Defun(tf.float64, tf.float64)
+def norm_grad64(x, dy):
+    return norm_grad(x, dy)
+
+@function.Defun(tf.float32, tf.float32)
+def norm_grad32(x, dy):
+    return norm_grad(x, dy)
+
+@function.Defun(tf.float64, grad_func=norm_grad64)
+def norm64(x):
+    return tf.norm(x, axis=-1)
+
+@function.Defun(tf.float32, grad_func=norm_grad32)
+def norm32(x):
+    return tf.norm(x, axis=-1)
+
+def norm_factor(constellation, epsilon=1e-12):
+    if any([ constellation.dtype == x for x in [tf.complex64,tf.complex128] ]):
+        castTo = constellation.dtype
+        constellation = complex2real(constellation)
+    else:
+        castTo = False
+
+    if constellation.dtype == tf.float32:
+        norm = norm32
+    elif constellation.dtype == tf.float64:
+        norm = norm64
+    
+    rmean = tf.reduce_mean( tf.square( norm(constellation) ) )
+    normFactor = tf.math.rsqrt( tf.maximum(rmean, epsilon) )
+    
+    if castTo:
+        return tf.cast(normFactor, castTo)
+    else:
+        return normFactor
 
 def logBase(x,base):
     numerator = tf.math.log(x)
@@ -152,6 +195,27 @@ def log2(x):
 def softmaxMI(softmax, X, Px):
     MI = tf.reduce_mean( logBase( tf.reduce_sum( softmax*X, axis=-1) / Px, 2) )
     return MI
+
+def symbolErrorrate(constellation, txSymbols, rxSymbols, nDims, M, reduce_axis):
+    tile_multiples = [1] * (nDims+1)
+    tile_multiples[-1] = M
+    
+    rxSymbols_tiled = tf.tile( tf.expand_dims( rxSymbols, -1 ), tile_multiples )
+    rxIdx = tf.argmin( tf.abs( rxSymbols_tiled - constellation ), axis=-1 )
+    
+    txSymbols_tiled = tf.tile( tf.expand_dims( txSymbols, -1 ), tile_multiples )
+    txIdx = tf.argmin( tf.abs( txSymbols_tiled - constellation ), axis=-1 )
+    
+    errors = tf.reduce_sum( tf.cast( tf.not_equal( txIdx, rxIdx ), tf.int32 ), reduce_axis )
+    errorrate = tf.reduce_mean( tf.cast( tf.not_equal( txIdx, rxIdx ), tf.float32 ), reduce_axis )
+    
+    return errorrate
+
+def effectiveSNR(txSymbols, rxSymbols, signalPower, reduce_axis):
+    estNoisePower = tf.reduce_mean( tf.square( tf.abs( txSymbols - rxSymbols ) ), reduce_axis )
+    effSNR = lin2dB( signalPower / estNoisePower, 'dB' )
+
+    return effSNR
 
 def gaussianMI(x, y, constellation, M, dtype=tf.float64):
     """
@@ -281,13 +345,3 @@ def dB2lin(dB,dBtype):
     ten = tf.constant(10,dB.dtype)
 
     return ten**( (dB+fact)/ten )
-
-def create_reset_metric(metric, scope='reset_metrics', *metric_args, **metric_kwargs):
-    """
-        see https://github.com/tensorflow/tensorflow/issues/4814#issuecomment-314801758
-    """
-    with tf.compat.v1.variable_scope(scope) as scope:
-        metric_op, update_op = metric(*metric_args, **metric_kwargs)
-        vars = tf.contrib.framework.get_variables(scope, collection=tf.compat.v1.GraphKeys.LOCAL_VARIABLES)
-        reset_op = tf.compat.v1.variables_initializer(vars)
-    return metric_op, update_op, reset_op

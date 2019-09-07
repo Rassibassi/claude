@@ -5,20 +5,34 @@ import claude.claudeflow.helper as cfh
 import claude.utils as cu
 import claude.tx as tx
 
-def defaultParameters(precision='double'):
+c = 299792458
+
+def defaultParameters(D=16.4640, Fc=1.9341e+14, precision='double'):
+
+	lambda_ = c / Fc
+	beta2 = D*1e-6*lambda_**2/(2*np.pi*c)
+
 	param = cu.AttrDict()
-	param.nPol       = 2
+	param.M       	     = 4
+	param.nPol       	 = 2
+	 
+	param.sps        	 = 16
+	param.nSamples   	 = 1024
+	param.rollOff    	 = 0.05
+	param.filterSpan 	 = 128
+	param.optimizeP  	 = False
+	 
+	param.PdBm       	 = 1
+	param.Rs         	 = 32e9
+	param.channels   	 = np.array( [-100., -50., 0., 50., 100.] )
+	param.nChannels  	 = len(param.channels)
+	param.frequencyShift = True
 
-	param.sps        = 16
-	param.nSamples   = 1024
-	param.rollOff    = 0.05
-	param.filterSpan = 128
-	param.optimizeP  = False
-
-	param.PdBm       = 1
-	param.Rs         = 32e9
-	param.channels   = np.array( [-100., -50., 0., 50., 100.] )
-	param.nChannels  = len(param.channels)
+	param.dispersionCompensation = False
+	param.beta2 				 = beta2 	 # with D = 16.464
+	param.dz     				 = 1000000.0 # 10 * 100 * 1e3
+	param.Fs 					 = 5.1200e+11
+	param.N 					 = param.sps * param.nSamples
 
 	if precision=='single':
 		param.realType    = tf.float32
@@ -29,16 +43,17 @@ def defaultParameters(precision='double'):
 
 	return param
 
-def wdmTransmitter(symbols, param, frequencyShift=True):
-	sps        = param.sps
-	filterSpan = param.filterSpan
-	nChannels  = param.nChannels
-	nPol       = param.nPol
-	nSamples   = param.nSamples
-	rollOff    = param.rollOff
-	PdBm       = param.PdBm
-	Rs         = param.Rs 
-	channels   = param.channels
+def wdmTransmitter(symbols, param):
+	sps        	   = param.sps
+	filterSpan 	   = param.filterSpan
+	nChannels  	   = param.nChannels
+	nPol       	   = param.nPol
+	nSamples   	   = param.nSamples
+	rollOff    	   = param.rollOff
+	PdBm       	   = param.PdBm
+	Rs         	   = param.Rs 
+	channels   	   = param.channels
+	frequencyShift = param.frequencyShift
 
 	realType    = param.realType
 	complexType = param.complexType
@@ -48,7 +63,7 @@ def wdmTransmitter(symbols, param, frequencyShift=True):
 	frequencies = channels * 1e9
 
 	symbols = cfh.upsample(symbols, sps, nSamples)
-	signal = cfh.pulseshaper(symbols, rollOff, sps, filterSpan, nSamples)
+	signal  = cfh.pulseshaper(symbols, rollOff, sps, filterSpan, nSamples)
 
 	# power, signal normalization
 	if param.optimizeP:
@@ -58,47 +73,62 @@ def wdmTransmitter(symbols, param, frequencyShift=True):
 	else:
 		P0 = tf.constant( cu.dB2lin( PdBm, 'dBm'), dtype=realType, name='Power' )
 
-	norm = tf.math.rsqrt( tf.reduce_mean( tf.square( tf.abs( signal ) ), keepdims=True, axis=-1 ) )
-	signal = tf.sqrt( tf.cast( P0, dtype=signal.dtype ) ) * tf.cast( norm, dtype=signal.dtype ) * signal
+	norm 	= tf.math.rsqrt( tf.reduce_mean( tf.square( tf.abs( signal ) ), keepdims=True, axis=-1 ) )
+	signal 	= tf.sqrt( tf.cast( P0, dtype=signal.dtype ) ) * tf.cast( norm, dtype=signal.dtype ) * signal
 
 	if frequencyShift:
 		# frequency shift
-		np_fShift = np.stack( [np.exp( 2j * np.pi * f/Fs * t ) for f in frequencies] )
+		np_fShift 	= np.stack( [np.exp( 2j * np.pi * f/Fs * t ) for f in frequencies] )
 		txFreqShift = tf.expand_dims( tf.constant( np_fShift, dtype=signal.dtype ), axis=1 )
-		signal = signal * txFreqShift
+		signal 		= signal * txFreqShift
 
 		# combine channels
 		signal = tf.reduce_sum( signal, axis=1 )
 
 	return signal
 
-def wdmReceiver(signal, param, frequencyShift=True):
-	sps        = param.sps
-	filterSpan = param.filterSpan
-	nChannels  = param.nChannels
-	nPol       = param.nPol
-	nSamples   = param.nSamples
-	rollOff    = param.rollOff
-	Rs         = param.Rs 
-	channels   = param.channels
+def wdmReceiver(signal, param):
+	sps        	   = param.sps
+	filterSpan 	   = param.filterSpan
+	nChannels  	   = param.nChannels
+	nPol       	   = param.nPol
+	nSamples   	   = param.nSamples
+	rollOff    	   = param.rollOff
+	Rs         	   = param.Rs 
+	channels   	   = param.channels
+	frequencyShift = param.frequencyShift
+
+	realType    = param.realType
+	complexType = param.complexType
+
+	dispersionCompensation = param.dispersionCompensation
+	beta2 				   = param.beta2
+	dz 					   = param.dz
+	Fs 					   = param.Fs
+	N                      = param.N
 
 	Fs          = sps * Rs
 	t           = np.arange( nSamples * sps )
-	frequencies = channels * 1e9
+	frequencies = channels * 1e9	
+	
+	if dispersionCompensation:
+		beta2 	= tf.constant( beta2, realType )
+		dz 		= tf.constant( dz, realType )
+		signal 	= cfh.dispersion_compensation(signal, beta2, dz, N, Fs)
 
 	if frequencyShift:
 		# frequency shift    
-		np_fShift = np.stack( [ np.exp( 2j * np.pi * f/Fs * t ) for f in frequencies[::-1] ] )
+		np_fShift 	= np.stack( [ np.exp( 2j * np.pi * f/Fs * t ) for f in frequencies[::-1] ] )
 		rxFreqShift = tf.expand_dims( tf.constant( np_fShift, dtype=signal.dtype ), axis=1 )
-		signal = tf.expand_dims( signal, axis=1 )
-		signal = tf.tile( signal, [1, nChannels, 1, 1] ) * rxFreqShift
+		signal 		= tf.expand_dims( signal, axis=1 )
+		signal 		= tf.tile( signal, [1, nChannels, 1, 1] ) * rxFreqShift
 
 	# matched filter
-	signal = cfh.pulseshaper(signal, rollOff, sps, filterSpan, nSamples)
+	signal  = cfh.pulseshaper(signal, rollOff, sps, filterSpan, nSamples)
 	symbols = cfh.downsample(signal, sps, nSamples)
 
 	# normalization
-	norm = tf.math.rsqrt( tf.reduce_mean( tf.square( tf.abs( symbols ) ), keepdims=True, axis=-1 ) )
+	norm 	= tf.math.rsqrt( tf.reduce_mean( tf.square( tf.abs( symbols ) ), keepdims=True, axis=-1 ) )
 	symbols = symbols * tf.cast( norm, dtype=symbols.dtype )
 
 	return symbols
