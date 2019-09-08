@@ -100,5 +100,13 @@ def train(sess, optimizer, loss, metricsDict, trainingParam, feedDictFun, debug=
             print(outString, flush=True)
 
     saver.restore(sess=sess,save_path=checkpoint_path)
+
+    sess.run(resetOps)
+    for _ in range(trainingParam.evalBatches):
+        feedDict = feedDictFun(trainingParam)
+        sess.run(updateOps, feed_dict=feedDict)
     
-    return sess
+    outMetrics = sess.run(list(meanMetricOpsDict.values()), feed_dict=feedDict)
+    outMetrics = { key:val for key,val in zip(list(meanMetricOpsDict.keys()), outMetrics) }
+    
+    return sess, outMetrics

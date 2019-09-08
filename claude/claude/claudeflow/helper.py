@@ -193,7 +193,7 @@ def log2(x):
     return logBase(x,2)
 
 def softmaxMI(softmax, X, Px):
-    MI = tf.reduce_mean( logBase( tf.reduce_sum( softmax*X, axis=-1) / Px, 2) )
+    MI = tf.reduce_mean( log2( tf.reduce_sum( softmax*X, axis=-1) / Px) )
     return MI
 
 def symbolErrorrate(constellation, txSymbols, rxSymbols, nDims, M, reduce_axis):

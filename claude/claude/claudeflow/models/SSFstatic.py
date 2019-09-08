@@ -159,7 +159,7 @@ def model(param, signal):
 	G = cfh.dB2lin( EDFAGain, 'dB' )
 	noiseFigureLin = tf.pow( ten, noiseFigure/ten )
 	nsp = ( G * noiseFigureLin - one ) / ( two * (G-one) ) # Agrawal, Fiber-optic communication, Edition 4, eq. 7.2.15
-	Pn = (G-one) * nsp * h * c / lambda_ * Fs
+	Pn = tf.identity( (G-one) * nsp * h * c / lambda_, name='noiseDensity' ) * Fs
 
 	## Attenuation filter
 	attenuation = tf.exp( -alphalin / two );
@@ -175,7 +175,7 @@ def model(param, signal):
 		dispersionComp = tf.exp( zeroOneCpx * tf.cast( beta2/two * tf.square(omega) * spanLength, complexType ) );
 		dispersionComp = tf.expand_dims( dispersionComp, 0 )
 
-	def nonLinearPhaseRot( s ):
+	def nonlinearPhaseRot( s ):
 		if nPol == 2:
 			if manakovEnabled:
 				phaseRotX = eight/nine * ( abs2( s[:,0,:] ) + abs2( s[:,1,:] ) )
@@ -194,7 +194,7 @@ def model(param, signal):
 
 	def step_body( s ):    
 		# nonlinear operator (without distance)
-		phaseRot  = nonLinearPhaseRot( s )
+		phaseRot  = nonlinearPhaseRot( s )
 		
 		# cast into complex domain
 		phaseRotCpx = tf.cast( phaseRot, complexType )

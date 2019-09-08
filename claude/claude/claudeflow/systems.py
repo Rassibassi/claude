@@ -64,22 +64,27 @@ def wdmTransmitter(symbols, param):
 
 	symbols = cfh.upsample(symbols, sps, nSamples)
 	signal  = cfh.pulseshaper(symbols, rollOff, sps, filterSpan, nSamples)
+	signal  = signal * tf.sqrt( tf.constant( sps, dtype=complexType ) )
 
 	# power, signal normalization
-	if param.optimizeP:
-		P0 = tf.constant( cu.dB2lin( PdBm, 'dBm'), dtype=realType )
-		P0 = tf.contrib.distributions.softplus_inverse(P0)
-		P0 = tf.nn.softplus( tf.Variable( P0 ), name='Power' )
-	else:
-		P0 = tf.constant( cu.dB2lin( PdBm, 'dBm'), dtype=realType, name='Power' )
+	P0 = tf.constant( cu.dB2lin( PdBm, 'dBm'), dtype=realType )
 
-	norm 	= tf.math.rsqrt( tf.reduce_mean( tf.square( tf.abs( signal ) ), keepdims=True, axis=-1 ) )
-	signal 	= tf.sqrt( tf.cast( P0, dtype=signal.dtype ) ) * tf.cast( norm, dtype=signal.dtype ) * signal
+	if param.optimizeP:
+		P0 = tf.contrib.distributions.softplus_inverse(P0)
+		P0 = tf.nn.softplus( tf.Variable( P0 ) )
+
+	tf.identity( P0, name='P0' )
+	tf.identity( cfh.lin2dB( P0, 'dBm' ), name='PdBm' )
+
+	normP0 = tf.identity( P0 / nPol, name='normP0' )
+
+	nPol = tf.constant( nPol, dtype=realType )
+	signal 	= tf.cast( tf.sqrt( normP0 ), dtype=complexType) * signal
 
 	if frequencyShift:
 		# frequency shift
 		np_fShift 	= np.stack( [np.exp( 2j * np.pi * f/Fs * t ) for f in frequencies] )
-		txFreqShift = tf.expand_dims( tf.constant( np_fShift, dtype=signal.dtype ), axis=1 )
+		txFreqShift = tf.expand_dims( tf.constant( np_fShift, dtype=complexType ), axis=1 )
 		signal 		= signal * txFreqShift
 
 		# combine channels
@@ -125,10 +130,7 @@ def wdmReceiver(signal, param):
 
 	# matched filter
 	signal  = cfh.pulseshaper(signal, rollOff, sps, filterSpan, nSamples)
+	signal  = signal * tf.math.rsqrt( tf.constant( sps, dtype=complexType ) )
 	symbols = cfh.downsample(signal, sps, nSamples)
-
-	# normalization
-	norm 	= tf.math.rsqrt( tf.reduce_mean( tf.square( tf.abs( symbols ) ), keepdims=True, axis=-1 ) )
-	symbols = symbols * tf.cast( norm, dtype=symbols.dtype )
 
 	return symbols
