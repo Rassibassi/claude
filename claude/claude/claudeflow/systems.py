@@ -110,7 +110,6 @@ def wdmReceiver(signal, param):
 	beta2 				   = param.beta2
 	dz 					   = param.dz
 	Fs 					   = param.Fs
-	N                      = param.N
 
 	Fs          = sps * Rs
 	t           = np.arange( nSamples * sps )
@@ -119,7 +118,7 @@ def wdmReceiver(signal, param):
 	if dispersionCompensation:
 		beta2 	= tf.constant( beta2, realType )
 		dz 		= tf.constant( dz, realType )
-		signal 	= cfh.dispersion_compensation(signal, beta2, dz, N, Fs)
+		signal 	= cfh.dispersion_compensation(signal, beta2, dz, nSamples*sps, Fs)
 
 	if frequencyShift:
 		# frequency shift    

@@ -226,13 +226,12 @@ def model(param, signal):
 		
 		return s
 
-	tf.compat.v1.add_to_collection( "checkpoints", signal )
-
 	print('nSpans: {}, nSteps: {}'.format(nSpans,nSteps), flush=True)
 
 	signal = tf.identity( signal, name="Span_{:03d}".format(0))
 
 	for span in range(nSpans):
+		tf.compat.v1.add_to_collection( "checkpoints", signal )
 		for step in range(nSteps):
 
 			if asymmetricSteps:
@@ -245,12 +244,10 @@ def model(param, signal):
 
 			signal = step_body( signal )
 
-			if step % checkpointInverval == 0:
+			if (step+1) % checkpointInverval == 0:
 				tf.compat.v1.add_to_collection( "checkpoints", signal )
 
 		signal = span_body( signal )
 		signal = tf.identity( signal, name="Span_{:03d}".format(span+1))
-
-		tf.compat.v1.add_to_collection( "checkpoints", signal )
 
 	return signal

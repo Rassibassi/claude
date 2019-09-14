@@ -279,11 +279,16 @@ def calcConstants(param):
     chi = np.zeros( (2, param.nChannels) )
     intraConstAdd = np.zeros( (5, param.nChannels) )
     interConstAdd = np.zeros( (4, param.nChannels) )
+
+    skip = 0
     for ii,channel in enumerate(param.channels):
+        if np.abs(channel) < 1e-6:
+            skip = 1
+            continue
         param.chSpacing = channel
-        chi[:,ii] = calcInterConstants(param)
-        intraConstAdd[:,ii] = calcIntraConstantsAddTerms(param)
-        interConstAdd[:,ii] = calcInterConstantsAddTerms(param)
+        chi[:,ii-skip] = calcInterConstants(param)
+        intraConstAdd[:,ii-skip] = calcIntraConstantsAddTerms(param)
+        interConstAdd[:,ii-skip] = calcInterConstantsAddTerms(param)
 
     X = calcIntraConstants(param)
     
