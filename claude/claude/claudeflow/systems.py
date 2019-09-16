@@ -78,7 +78,6 @@ def wdmTransmitter(symbols, param):
 
 	normP0 = tf.identity( P0 / nPol, name='normP0' )
 
-	nPol = tf.constant( nPol, dtype=realType )
 	signal 	= tf.cast( tf.sqrt( normP0 ), dtype=complexType) * signal
 
 	if frequencyShift:
