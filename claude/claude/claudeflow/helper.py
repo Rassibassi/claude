@@ -161,17 +161,18 @@ def norm64(x):
 def norm32(x):
     return tf.norm(x, axis=-1)
 
+def norm(x):
+    if x.dtype == tf.float32:
+        return norm32(x)
+    elif x.dtype == tf.float64:
+        return norm64(x)
+
 def norm_factor(constellation, epsilon=1e-12):
     if any([ constellation.dtype == x for x in [tf.complex64,tf.complex128] ]):
         castTo = constellation.dtype
         constellation = complex2real(constellation)
     else:
         castTo = False
-
-    if constellation.dtype == tf.float32:
-        norm = norm32
-    elif constellation.dtype == tf.float64:
-        norm = norm64
     
     rmean = tf.reduce_mean( tf.square( norm(constellation) ) )
     normFactor = tf.math.rsqrt( tf.maximum(rmean, epsilon) )
