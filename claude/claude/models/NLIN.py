@@ -276,25 +276,23 @@ def calcConstants(param):
     aseNoisePower = calcAseNoisePower(param)
     
     # Calculate System constants
-    chi = np.zeros( (2, param.nChannels) )
+    interConst = np.zeros( (2, param.nChannels) )
     intraConstAdd = np.zeros( (5, param.nChannels) )
     interConstAdd = np.zeros( (4, param.nChannels) )
 
-    skip = 0
     for ii,channel in enumerate(param.channels):
         if np.abs(channel) < 1e-6:
-            skip = 1
             continue
         param.chSpacing = channel
-        chi[:,ii-skip] = calcInterConstants(param)
-        intraConstAdd[:,ii-skip] = calcIntraConstantsAddTerms(param)
-        interConstAdd[:,ii-skip] = calcInterConstantsAddTerms(param)
+        interConst[:,ii] = calcInterConstants(param)
+        intraConstAdd[:,ii] = calcIntraConstantsAddTerms(param)
+        interConstAdd[:,ii] = calcInterConstantsAddTerms(param)
 
-    X = calcIntraConstants(param)
+    intraConst = calcIntraConstants(param)
     
-    return (aseNoisePower, chi, X, intraConstAdd, interConstAdd)
+    return (aseNoisePower, interConst, intraConst, interConstAdd, intraConstAdd)
 
-def calcNLIN(param, powerSweep, aseNoisePower, chi, X, intraConstAdd, interConstAdd):
+def calcNLIN(param, powerSweep, aseNoisePower, interConst, intraConst, interConstAdd, intraConstAdd):
     inter = np.zeros(powerSweep.shape)
     intra = np.zeros(powerSweep.shape)
 
@@ -303,8 +301,8 @@ def calcNLIN(param, powerSweep, aseNoisePower, chi, X, intraConstAdd, interConst
 
     for ii,PdBm in enumerate(powerSweep):
         param.PdBm = PdBm
-        inter[ii] = np.sum( calcInterChannelNLIN(chi,param) )
-        intra[ii] = calcIntraChannelNLIN(X,param)[0]
+        inter[ii] = np.sum( calcInterChannelNLIN(interConst,param) )
+        intra[ii] = calcIntraChannelNLIN(intraConst,param)[0]
 
         interAdd[ii] = np.sum( calcInterChannelNLINAddTerms(interConstAdd, param) )
         intraAdd[ii] = np.sum( calcIntraChannelNLIN(intraConstAdd, param) )
