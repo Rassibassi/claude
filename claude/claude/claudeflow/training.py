@@ -49,19 +49,22 @@ def train(sess, optimizer, loss, metricsDict, trainingParam, feedDictFun, debug=
         trainWriter = tf.compat.v1.summary.FileWriter(summaries_dir + '/train', sess.graph)
     else:
         trainWriter = None
-        
+    
+    sess.run(init)
+
     saver = tf.compat.v1.train.Saver()
     checkpoint_path = os.path.join(trainingParam.path,'checkpoint',trainingParam.filename,'best')
     if not os.path.exists(checkpoint_path):
         os.makedirs(checkpoint_path)
     else:
-        pass
+        print("Restoring...", flush=True)
+        saver.restore(sess=sess,save_path=checkpoint_path)
 
     bestLoss = 100000
     bestAcc = 0
     lastImprovement = 0
 
-    sess.run([init, resetOps, zeroOps])
+    sess.run([resetOps, zeroOps])
 
     for epoch in range(1, trainingParam.nEpochs+1):
         sess.run(resetOps)

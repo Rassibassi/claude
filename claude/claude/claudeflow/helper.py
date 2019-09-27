@@ -74,6 +74,13 @@ def dispersion_compensation(signal, beta2, distance, N, Fs):
     return signal
 
 def staticPhaseRotationCompensation(symbols):
+    '''
+        see:
+        J. Diniz et. al.
+        "Low-complexity carrier phase recovery based on principal component analysis for square-QAM modulation formats"
+        Optics Express, Vol. 27, Issue 11, pp. 15617-15626 (2019)
+        https://orbit.dtu.dk/en/publications/lowcomplexity-carrier-phase-recovery-based-on-principal-component-analysis-for-squareqam-modulation-formats(c1132726-ce90-433a-8dc7-8ccb3e5bc180).html
+    '''
     if symbols.dtype == tf.complex64:
         realType = tf.float32
     else:
