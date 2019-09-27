@@ -71,7 +71,7 @@ jupyter-core       4.4.0
 matplotlib         2.2.3     
 numpy              1.15.1    
 scipy              1.1.0     
-tensorflow         1.10.1
+tensorflow         1.14
 ```
 
 Start Jupyter with
