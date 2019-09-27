@@ -1,16 +1,24 @@
 # Claude
 This repository provides helper functions and models for end-to-end learning of optical communication systems.
 
-In particular, this repository provides an implementation for our paper "Deep Learning of Geometric Constellation Shaping including Fiber Nonlinearities" [https://arxiv.org/abs/1805.03785] and our manuscript "Geometric Constellation Shaping for Fiber Optic Communication Systems via End-to-end Learning" [https://arxiv.org/abs/1810.00774].
+For clarifications or bugs feel free to create a Github issue or write me an email: `chef@<firstname><lastname>.com`
+
+This code has been developed as part of my PhD at DTU, Denmark, but also thereafter. There is still some code that has not been integrated into the public repository here, which will take some more time.
+
+The [latest update](examples/tf_wdmSystem-learning.ipynb), an implementation of the split-step Fourier method (SSFM) in Tensorflow, allows gradient based learning end-to-end through the SSFM. The procedure is computational expensive and memory demanding, see here for two rendered iPython notebooks containing a pure [simulation](examples/tf_wdmSystem.html) and an example of [constellation shaping across the SSFM via end-to-end learning](examples/tf_wdmSystem-learning.html). Since the SSFM models cross-wavelength, cross-polarization and temporal correlations of the signal, in principle, it is possible to learn a high dimensional constellation shape across all mentioned degrees of freedom. However, the computational demand and memory usage is very large. If you happen to have a high performance cluster with many GPUs in your backyard, and are interested in attacking such high dimensional constellation shape, feel free to reach out. Also, if someone is willing to share his implementations (also in other programming languages) of fibre models modelling cross-wavelength, cross-polarization or temporal correlations on a symbol level, I'm happy to help with a Tensorflow implementation.
+
+Further, this repository provides an implementation for two conference contributions ([https://arxiv.org/abs/1805.03785], [https://arxiv.org/abs/1907.08535]) and a manuscript [https://arxiv.org/abs/1810.00774].
 
 ### Content
-- Fiber model [iPyton Notebook Example](examples/np_NLINmodel.ipynb)
+- Fiber model, [NLIN/GN model](examples/np_NLINmodel.ipynb), [Split step Fourier Method](claude/claude/claudeflow/models/SSFstatic.py)
+- System components, e.g. [Pulse shaping filter](examples/tf_pulseshaperB2B.ipynb), WDM system framework [back2back](examples/tf_wdmSystemB2B.ipynb) and [transmission simulation](examples/tf_wdmSystem.ipynb)
 - Geometrical constellation shaping via end-to-end learning:
 
-|iPyton Notebook Example | Channel | Optimised for bits/symbols (GMI/MI) | Gradient Through Channel | Reference |
+|iPython Notebook Example | Channel | Optimised for bits/symbols (GMI/MI) | Gradient Through Channel | Reference |
 |---|---|---|---|---|
 [Link](examples/tf_AutoEncoderForGeometricShapingAndAwgn.ipynb) | AWGN | Symbols (MI) | :heavy_check_mark: | ---
 [Link](examples/tf_AutoEncoderForGeometricShapingAndNlinModel.ipynb) | Fiber (NLIN/GN)	| Symbols (MI) | :heavy_check_mark: | [Arxiv 1](https://arxiv.org/abs/1805.03785), [Arxiv 2](https://arxiv.org/abs/1810.00774)
+[Link](examples/tf_wdmSystem-learning.ipynb) | Fiber (SSFM)| Symbols (MI) | :heavy_check_mark: | ---
 [Link](examples/tf_AutoEncoderForGeometricShapingAwgnGmi.ipynb) | AWGN | Bits (GMI) | :heavy_check_mark: | ---
 [Link](examples/tf_AutoEncoderForGeometricShapingNlinGmi.ipynb) | Fiber (NLIN/GN)	| Bits (GMI) | :heavy_check_mark: | [Arxiv](https://arxiv.org/abs/1907.08535)
 [Link](examples/tf_AutoEncoderForGeometricShapingAndBlindAwgn.ipynb) | AWGN | Symbols (MI) | :x: | [Arxiv](https://arxiv.org/abs/1804.02276)
