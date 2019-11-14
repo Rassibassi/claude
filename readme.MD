@@ -14,14 +14,15 @@ Further, this repository provides an implementation for two conference contribut
 - System components, e.g. [Pulse shaping filter](examples/tf_pulseshaperB2B.ipynb), WDM system framework [back2back](examples/tf_wdmSystemB2B.ipynb) and [transmission simulation](examples/tf_wdmSystem.ipynb)
 - Geometrical constellation shaping via end-to-end learning:
 
-|iPython Notebook Example | Channel | Optimised for bits/symbols (GMI/MI) | Gradient Through Channel | Reference |
+|iPython Notebook Example | Shaping | Channel | Optimised for bits/symbols (GMI/MI) | Gradient Through Channel | Reference |
 |---|---|---|---|---|
-[Link](examples/tf_AutoEncoderForGeometricShapingAndAwgn.ipynb) | AWGN | Symbols (MI) | :heavy_check_mark: | ---
-[Link](examples/tf_AutoEncoderForGeometricShapingAndNlinModel.ipynb) | Fiber (NLIN/GN)	| Symbols (MI) | :heavy_check_mark: | [Arxiv 1](https://arxiv.org/abs/1805.03785), [Arxiv 2](https://arxiv.org/abs/1810.00774)
-[Link](examples/tf_wdmSystem-learning.ipynb) | Fiber (SSFM)| Symbols (MI) | :heavy_check_mark: | ---
-[Link](examples/tf_AutoEncoderForGeometricShapingAwgnGmi.ipynb) | AWGN | Bits (GMI) | :heavy_check_mark: | ---
-[Link](examples/tf_AutoEncoderForGeometricShapingNlinGmi.ipynb) | Fiber (NLIN/GN)	| Bits (GMI) | :heavy_check_mark: | [Arxiv](https://arxiv.org/abs/1907.08535)
-[Link](examples/tf_AutoEncoderForGeometricShapingAndBlindAwgn.ipynb) | AWGN | Symbols (MI) | :x: | [Arxiv](https://arxiv.org/abs/1804.02276)
+[Link](examples/tf_AutoEncoderForGeometricShapingAndAwgn.ipynb) | Geometric | AWGN | Symbols (MI) | :heavy_check_mark: | ---
+[Link](examples/tf_AutoEncoderForProbabilisticShapingAndAwgn.ipynb) | Probabilistic | AWGN | Symbols (MI) | :heavy_check_mark: | [Arxiv](https://arxiv.org/abs/1906.07748)
+[Link](examples/tf_AutoEncoderForGeometricShapingAndNlinModel.ipynb) | Geometric | Fiber (NLIN/GN)	| Symbols (MI) | :heavy_check_mark: | [Arxiv 1](https://arxiv.org/abs/1805.03785), [Arxiv 2](https://arxiv.org/abs/1810.00774)
+[Link](examples/tf_wdmSystem-learning.ipynb) | Geometric | Fiber (SSFM)| Symbols (MI) | :heavy_check_mark: | ---
+[Link](examples/tf_AutoEncoderForGeometricShapingAwgnGmi.ipynb) | Geometric | AWGN | Bits (GMI) | :heavy_check_mark: | ---
+[Link](examples/tf_AutoEncoderForGeometricShapingNlinGmi.ipynb) | Geometric | Fiber (NLIN/GN)	| Bits (GMI) | :heavy_check_mark: | [Arxiv](https://arxiv.org/abs/1907.08535)
+[Link](examples/tf_AutoEncoderForGeometricShapingAndBlindAwgn.ipynb) | Geometric | AWGN | Symbols (MI) | :x: | [Arxiv](https://arxiv.org/abs/1804.02276)
 
 ### Acknowledgements
 The learning algorithm learns by embedding a fiber channel model within an autoencoder. The implementation of the fiber channel model is copied from a MATLAB implementation by Dar et al. [https://www.osapublishing.org/oe/abstract.cfm?uri=oe-22-12-14199, https://arxiv.org/abs/1310.6137]. Please cite the authors appropriately if you use the here provided Python implementation.
