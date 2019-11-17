@@ -73,7 +73,7 @@ def dispersion_compensation(signal, beta2, distance, N, Fs):
     signal = i_fft( dispersion_compensation, signal, transform_filter=False )
     return signal
 
-def staticPhaseRotationCompensation(symbols):
+def staticPhaseRotationCompensation(symbols, nPilots=None):
     '''
         see:
         J. Diniz et. al.
@@ -90,8 +90,13 @@ def staticPhaseRotationCompensation(symbols):
     FOUR         = tf.constant( 4, realType)
     PI           = tf.constant( np.pi, realType)
     zeroOneCpx   = tf.constant( 0+1j, symbols.dtype)
+
+    if nPilots is not None:
+        pilot_symbols = symbols[..., 0:nPilots]
+    else:
+        pilot_symbols = symbols
     
-    symbols2 = tf.square( symbols )
+    symbols2 = tf.square( pilot_symbols )
     symbols2vec = tf.stack([tf.math.real(symbols2), tf.math.imag(symbols2)], axis=-2)
     covarianceMatrix = tf.matmul(symbols2vec, tf.linalg.matrix_transpose(symbols2vec))
     eig = tf.linalg.eigh(covarianceMatrix)
@@ -112,9 +117,15 @@ def tfarg(fn, x):
     """
     return tf.reshape( fn( tf.reshape( x, [-1, tf.shape(x)[-1]] ), -1 ), tf.shape(x)[0:-1] )
 
-def testPhases(constellation, txSymbols, rxSymbols, nDims, M, nTestPhases=4):
+def testPhases(constellation, txSymbols, rxSymbols, nDims, M, nTestPhases=4, nPilots=None):
     PI = tf.constant(np.pi, rxSymbols.dtype)
     zeroTwoCpx = tf.constant( 0+2j, rxSymbols.dtype)
+
+    allRxSymbols = rxSymbols
+
+    if nPilots is not None:
+        rxSymbols = rxSymbols[..., 0:nPilots]
+        txSymbols = txSymbols[..., 0:nPilots]
     
     tile_multiples = [1] * (nDims+1)
     tile_multiples[-1] = nTestPhases
@@ -137,9 +148,9 @@ def testPhases(constellation, txSymbols, rxSymbols, nDims, M, nTestPhases=4):
     rotIdx = tf.argmin( errors4rot, -1 )
     rotByThis = tf.expand_dims( tf.gather(phi4rot, rotIdx), -1 )
 
-    rxSymbols = rxSymbols * tf.exp( -zeroTwoCpx * PI * rotByThis )
+    allRxSymbols = allRxSymbols * tf.exp( -zeroTwoCpx * PI * rotByThis )
     
-    return rxSymbols
+    return allRxSymbols
 
 def real2complex(x):
     return tf.complex(x[...,0], x[...,1])
@@ -225,7 +236,7 @@ def effectiveSNR(txSymbols, rxSymbols, signalPower, reduce_axis):
 
     return effSNR
 
-def gaussianMI(x, y, constellation, M, dtype=tf.float64):
+def gaussianMI(x, y, constellation, M, uniform_Px=True, dtype=tf.float64):
     """
         Computes mutual information with Gaussian auxiliary channel assumption and constellation with uniform porbability distribution
 
@@ -254,19 +265,21 @@ def gaussianMI(x, y, constellation, M, dtype=tf.float64):
     PI = tf.constant( np.pi, dtype=dtype )
     REALMIN = tf.constant( np.finfo(float).tiny, dtype=dtype )
     
-    # TODO
-    # use following line if P_X is not uniform or empirical
-    # xint = tf.math.argmin( tf.square( tf.abs( x - constellation ) ), axis=0)
-    # ...
-    # else:
-    P_X = tf.constant( 1 / M, dtype=dtype)
+    if uniform_Px:
+        P_X = tf.constant( 1 / M, dtype=dtype)
+    else:
+        xint = tf.math.argmin(tf.square(tf.abs(x - constellation)), axis=0, output_type=tf.int32)
+        x_count = tf.math.bincount(xint)
+        x_count = tf.ensure_shape(x_count, (M,))
+        P_X = tf.cast(x_count, dtype) / N
+        
     N0 = tf.reduce_mean( tf.square( tf.abs(x-y) ) )
     
     qYonX = 1 / ( PI*N0 ) * tf.exp( ( -tf.square(tf.math.real(y)-tf.math.real(x)) -tf.square(tf.math.imag(y)-tf.math.imag(x)) ) / N0 )
     
     qY = []
     for ii in np.arange(M):
-        temp = P_X * (1 / (PI * N0) * tf.exp( ( -tf.square(tf.math.real(y)-tf.math.real(constellation[ii,0])) -tf.square(tf.math.imag(y)-tf.math.imag(constellation[ii,0])) ) / N0) )
+        temp = P_X[ii] * (1 / (PI * N0) * tf.exp( ( -tf.square(tf.math.real(y)-tf.math.real(constellation[ii,0])) -tf.square(tf.math.imag(y)-tf.math.imag(constellation[ii,0])) ) / N0) )
         qY.append(temp)
     qY = tf.reduce_sum( tf.concat(qY, axis=0), axis=0)
             

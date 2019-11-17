@@ -15,10 +15,11 @@ Further, this repository provides an implementation for two conference contribut
 - Geometrical constellation shaping via end-to-end learning:
 
 |iPython Notebook Example | Shaping | Channel | Optimised for bits/symbols (GMI/MI) | Gradient Through Channel | Reference |
-|---|---|---|---|---|---|
+|---|---|---|---|---|---|---|
 [Link](examples/tf_AutoEncoderForGeometricShapingAndAwgn.ipynb) | Geometric | AWGN | Symbols (MI) | :heavy_check_mark: | ---
 [Link](examples/tf_AutoEncoderForProbabilisticShapingAndAwgn.ipynb) | Probabilistic | AWGN | Symbols (MI) | :heavy_check_mark: | [Arxiv](https://arxiv.org/abs/1906.07748)
 [Link](examples/tf_AutoEncoderForGeometricShapingAndNlinModel.ipynb) | Geometric | Fiber (NLIN/GN)	| Symbols (MI) | :heavy_check_mark: | [Arxiv 1](https://arxiv.org/abs/1805.03785), [Arxiv 2](https://arxiv.org/abs/1810.00774)
+[Link](examples/examples/tf_AutoEncoderForProbabilisticShapingAndNlinModel.ipynb) | Probabilistic | Fiber (NLIN/GN) | Symbols (MI) | :heavy_check_mark: | ---
 [Link](examples/tf_wdmSystem-learning.ipynb) | Geometric | Fiber (SSFM)| Symbols (MI) | :heavy_check_mark: | ---
 [Link](examples/tf_AutoEncoderForGeometricShapingAwgnGmi.ipynb) | Geometric | AWGN | Bits (GMI) | :heavy_check_mark: | ---
 [Link](examples/tf_AutoEncoderForGeometricShapingNlinGmi.ipynb) | Geometric | Fiber (NLIN/GN)	| Bits (GMI) | :heavy_check_mark: | [Arxiv](https://arxiv.org/abs/1907.08535)
