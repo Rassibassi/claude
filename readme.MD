@@ -12,7 +12,7 @@ Further, this repository provides an implementation for two conference contribut
 ### Content
 - Fiber model, [NLIN/GN model](examples/np_NLINmodel.ipynb), [Split step Fourier Method](claude/claude/claudeflow/models/SSFstatic.py)
 - System components, e.g. [Pulse shaping filter](examples/tf_pulseshaperB2B.ipynb), WDM system framework [back2back](examples/tf_wdmSystemB2B.ipynb) and [transmission simulation](examples/tf_wdmSystem.ipynb)
-- Geometrical constellation shaping via end-to-end learning:
+- Geometrical/Probabilistic constellation shaping via end-to-end learning:
 
 |iPython Notebook Example | Shaping | Channel | Optimised for bits/symbols (GMI/MI) | Gradient Through Channel | Reference |
 |---|---|---|---|---|---|
