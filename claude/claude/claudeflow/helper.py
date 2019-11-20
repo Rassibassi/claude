@@ -236,7 +236,7 @@ def effectiveSNR(txSymbols, rxSymbols, signalPower, reduce_axis):
 
     return effSNR
 
-def gaussianMI(x, y, constellation, M, uniform_Px=True, dtype=tf.float64):
+def gaussianMI(x, y, constellation, M, dtype=tf.float64):
     """
         Computes mutual information with Gaussian auxiliary channel assumption and constellation with uniform porbability distribution
 
@@ -264,14 +264,11 @@ def gaussianMI(x, y, constellation, M, uniform_Px=True, dtype=tf.float64):
 
     PI = tf.constant( np.pi, dtype=dtype )
     REALMIN = tf.constant( np.finfo(float).tiny, dtype=dtype )
-    
-    if uniform_Px:
-        P_X = tf.constant( 1 / M, dtype=dtype)
-    else:
-        xint = tf.math.argmin(tf.square(tf.abs(x - constellation)), axis=0, output_type=tf.int32)
-        x_count = tf.math.bincount(xint)
-        x_count = tf.ensure_shape(x_count, (M,))
-        P_X = tf.cast(x_count, dtype) / N
+
+    xint = tf.math.argmin(tf.square(tf.abs(x - constellation)), axis=0, output_type=tf.int32)
+    x_count = tf.math.bincount(xint)
+    x_count = tf.ensure_shape(x_count, (M,))
+    P_X = tf.cast(x_count, dtype) / N
         
     N0 = tf.reduce_mean( tf.square( tf.abs(x-y) ) )
     
