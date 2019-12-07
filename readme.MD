@@ -5,7 +5,7 @@ For clarifications or bugs feel free to create a Github issue or write me an ema
 
 This code has been developed as part of my PhD at DTU, Denmark, but also thereafter. There is still some code that has not been integrated into the public repository here, which will take some more time.
 
-The latest example concerns a laser phase noise channel (+ AWGN), as studied in optical communication systems [https://ieeexplore.ieee.org/document/4814758]. A recurrent neural network is used to estimate the phase noise in parallel to the end-to-end auto encoder. The learned constellation becomes eye shaped instead of round in order to have better properties regarding the phase noise, see [here](). The recurrent neural network can be seen as a spatial transformer network [https://arxiv.org/abs/1506.02025, https://arxiv.org/abs/1605.00716]. 
+The latest example concerns a laser phase noise channel (+ AWGN), as studied in optical communication systems [https://ieeexplore.ieee.org/document/4814758]. A recurrent neural network is used to estimate the phase noise in parallel to the end-to-end auto encoder. The learned constellation becomes eye shaped instead of round in order to have better properties regarding the phase noise, see [here](examples/tf_AutoEncoderForGeometricShapingAndLaserphasenoise.ipynb). The recurrent neural network can be seen as a spatial transformer network [https://arxiv.org/abs/1506.02025, https://arxiv.org/abs/1605.00716]. 
 
 Some examples doing probabilistic shaping have been added, following this publication ([https://arxiv.org/abs/1906.07748]).
 
