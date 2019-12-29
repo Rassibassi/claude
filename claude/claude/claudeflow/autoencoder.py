@@ -29,10 +29,10 @@ def encoder(x, aeParam, bits=False, toComplex=False, summaries=False, dropout=Fa
 
     return symbols, constellation
 
-def _encoder(layer, nHidden, nLayers, activation, nOutput=2, summaries=False, dropout=False, dropout_fun=Dropout, keep_prob=1., name='encoder'):
+def _encoder(layer, nHidden, nLayers, activation, nOutput=2, summaries=False, kernel_initializer='glorot_uniform', dropout=False, dropout_fun=Dropout, keep_prob=1., name='encoder'):
     for i in range(nLayers):
         layer_name = name+str(i)
-        layer = Dense(nHidden, activation=activation, _reuse=tf.compat.v1.AUTO_REUSE, name=layer_name)(layer)
+        layer = Dense(nHidden, activation=activation, kernel_initializer=kernel_initializer, _reuse=tf.compat.v1.AUTO_REUSE, name=layer_name)(layer)
         
         if summaries:
             _layer_summary(layer_name, layer.dtype)
