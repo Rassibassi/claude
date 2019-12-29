@@ -70,17 +70,17 @@ def train(sess, optimizer, loss, metricsDict, trainingParam, feedDictFun, debug=
         sess.run(resetOps)
         
         for batch in range(1,trainingParam.nBatches+1):
-            if debug:
-                print('batch: ', batch, end=' | ', flush=True)
             sess.run(zeroOps)
             if debug:
+                print('batch: ', batch, end=' | ', flush=True)
                 print('miniBatch: ', end='', flush=True)
             for miniBatch in range(1,trainingParam.nMiniBatches+1):
                 if debug:
                     print(miniBatch, end=', ')
                 feedDict = feedDictFun(trainingParam)
                 sess.run([accumulateOps, updateOps], feed_dict=feedDict)
-            print('', flush=True)
+            if debug:
+                print('', flush=True)
             sess.run(trainStep)
                 
         outMetrics = sess.run(list(meanMetricOpsDict.values()), feed_dict=feedDict)
