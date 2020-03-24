@@ -30,7 +30,7 @@ Further, this repository provides an implementation for two conference contribut
 [Link](examples/tf_AutoEncoderForGeometricShapingAwgnGmi.ipynb) | Geometric | AWGN | Bits (GMI) | :heavy_check_mark: | ---
 [Link](examples/tf_AutoEncoderForGeometricShapingNlinGmi.ipynb) | Geometric | Fiber (NLIN/GN)	| Bits (GMI) | :heavy_check_mark: | [Arxiv](https://arxiv.org/abs/1907.08535)
 [Link](examples/tf_AutoEncoderForGeometricShapingAndBlindAwgn.ipynb) | Geometric | AWGN | Symbols (MI) | :x: | [Arxiv](https://arxiv.org/abs/1804.02276)
-[Link](examples/tf_AutoEncoderForGeometricShapingAndAwgn-MINE.ipynb) | Geometric/MINE | AWGN | Symbols (MI) | :x: | [Arxiv](https://arxiv.org/abs/1903.02865)
+[Link](examples/tf_AutoEncoderForGeometricShapingAndAwgn-MINE.ipynb) | Geometric | AWGN | Symbols (MI)/MINE | :x: | [Arxiv](https://arxiv.org/abs/1903.02865)
 
 ### Acknowledgements
 The learning algorithm learns by embedding a fiber channel model within an autoencoder. The implementation of the fiber channel model is copied from a MATLAB implementation by Dar et al. [https://www.osapublishing.org/oe/abstract.cfm?uri=oe-22-12-14199, https://arxiv.org/abs/1310.6137]. Please cite the authors appropriately if you use the here provided Python implementation.
