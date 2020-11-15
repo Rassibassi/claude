@@ -8,6 +8,7 @@
 
 import numpy as np
 import claude.utils as cu
+from copy import copy
 
 c = 299792458
 h = 6.6261e-34
@@ -280,13 +281,14 @@ def calcConstants(param):
     intraConstAdd = np.zeros( (5, param.nChannels) )
     interConstAdd = np.zeros( (4, param.nChannels) )
 
+    local_param = copy(param)
     for ii,channel in enumerate(param.channels):
         if np.abs(channel) < 1e-6:
             continue
-        param.chSpacing = channel
-        interConst[:,ii] = calcInterConstants(param)
-        intraConstAdd[:,ii] = calcIntraConstantsAddTerms(param)
-        interConstAdd[:,ii] = calcInterConstantsAddTerms(param)
+        local_param.chSpacing = channel
+        interConst[:,ii] = calcInterConstants(local_param)
+        intraConstAdd[:,ii] = calcIntraConstantsAddTerms(local_param)
+        interConstAdd[:,ii] = calcInterConstantsAddTerms(local_param)
 
     intraConst = calcIntraConstants(param)
     
